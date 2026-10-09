@@ -39,7 +39,10 @@ def test_empty_sku_is_rejected() -> None:
 
 def test_missing_line_key_is_rejected() -> None:
     """Spec 3, rule 3: every required key must be present."""
-    ...
+    line_without_qty = line()
+    del line_without_qty["qty"]
+    assert validate_order([line_without_qty]) is not None
+
 
 
 def test_non_numeric_quantity_is_rejected() -> None:
