@@ -33,6 +33,8 @@ def validate_order(
             return "line quantity must be a whole number"
         if int(position["qty"]) <= 0:
             return "line quantity must be greater than zero"
+        if not position["unit_price_kopecks"].lstrip("-").isdigit():
+            return "line price must be a whole number"
     return None
 
 
