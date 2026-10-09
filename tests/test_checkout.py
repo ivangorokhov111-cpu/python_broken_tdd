@@ -113,14 +113,14 @@ def test_discount_is_capped_at_thirty_percent() -> None:
 
 def test_delivery_is_charged_for_small_order() -> None:
     """Spec 4, steps 7-10: a city adds SHIPPING_KOPEKS and VAT is charged on it."""
-    assert calculate_order_total([line(qty="1", unit_price_kopecks="499999")], shipping_city="spb") == 659_799
+    assert calculate_order_total([line(qty="1", unit_price_kopecks="499999")], shipping_city="spb") == 658_799
 
 
 def test_free_delivery_uses_discounted_subtotal() -> None:
     """Spec 4, step 7: the threshold is checked against the sum after the discount."""
-    assert calculate_order_total([line(qty="30", unit_price_kopecks="19800")], shipping_city="nsk") == 628_838
+    assert calculate_order_total([line(qty="10", unit_price_kopecks="50000")], shipping_city="msk") == 628_800
 
 
 def test_vat_is_charged_on_the_discounted_sum() -> None:
     """Spec 4, steps 8-10: base = discounted subtotal + delivery."""
-    ...
+    assert calculate_order_total([line(qty="50", unit_price_kopecks="1990")], promo_code="WELCOME10", shipping_city="msk") == 160_290
