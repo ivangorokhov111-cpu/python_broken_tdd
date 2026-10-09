@@ -26,6 +26,8 @@ def validate_order(
     for position in lines:
         if position.get("sku") == "":
             return "line has an empty sku"
+        if int(position["qty"]) <= 0:
+            return "line quantity must be greater than zero"
     return None
 
 
