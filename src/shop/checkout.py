@@ -23,6 +23,9 @@ def validate_order(
     """Return a human readable reason why the order is invalid, or None if it is fine."""
     if not lines:
         return "order has no lines"
+    for position in lines:
+        if position.get("sku") == "":
+            return "line has an empty sku"
     return None
 
 
