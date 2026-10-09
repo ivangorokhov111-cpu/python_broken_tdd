@@ -17,32 +17,50 @@ TIER_DISCOUNTS = ((10, 5), (25, 10), (50, 15))
 REQUIRED_LINE_KEYS = ("sku", "qty", "unit_price_kopecks")
 
 
+def _check_line(position: dict[str, str]) -> str | None:
+    """Return why a single line is invalid, or None if the line is fine."""
+    for key in REQUIRED_LINE_KEYS:
+        if key not in position:
+            return f"line is missing required key {key}"
+    if position["sku"] == "":
+        return "line has an empty sku"
+    qty = position["qty"]
+    if not qty.isdigit():
+        return "line quantity must be a whole number"
+    if int(qty) <= 0:
+        return "line quantity must be greater than zero"
+    price = position["unit_price_kopecks"]
+    if not price.lstrip("-").isdigit():
+        return "line price must be a whole number"
+    if int(price) < 0:
+        return "line price must not be negative"
+    return None
+
+
+def _check_lines(lines: list[dict[str, str]]) -> str | None:
+    """Return why the list of lines is invalid, or None if all lines are fine."""
+    if not lines:
+        return "order has no lines"
+    seen_skus: set[str] = set()
+    for position in lines:
+        problem = _check_line(position)
+        if problem is not None:
+            return problem
+        if position["sku"] in seen_skus:
+            return "line sku is duplicated"
+        seen_skus.add(position["sku"])
+    return None
+
+
 def validate_order(
     lines: list[dict[str, str]],
     promo_code: str = "",
     shipping_city: str = "",
 ) -> str | None:
     """Return a human readable reason why the order is invalid, or None if it is fine."""
-    if not lines:
-        return "order has no lines"
-    seen_skus: set[str] = set()
-    for position in lines:
-        for key in REQUIRED_LINE_KEYS:
-            if key not in position:
-                return f"line is missing required key {key}"
-        if position.get("sku") == "":
-            return "line has an empty sku"
-        if not position["qty"].isdigit():
-            return "line quantity must be a whole number"
-        if int(position["qty"]) <= 0:
-            return "line quantity must be greater than zero"
-        if not position["unit_price_kopecks"].lstrip("-").isdigit():
-            return "line price must be a whole number"
-        if int(position["unit_price_kopecks"]) < 0:
-            return "line price must not be negative"
-        if position["sku"] in seen_skus:
-            return "line sku is duplicated"
-        seen_skus.add(position["sku"])
+    problem = _check_lines(lines)
+    if problem is not None:
+        return problem
     if promo_code and promo_code not in PROMO_CODES:
         return "unknown promo code"
     if shipping_city and shipping_city not in SUPPORTED_CITIES:
@@ -58,9 +76,7 @@ def calculate_order_total(
     """Return the order total in kopecks, or None if the order is invalid."""
     if validate_order(lines, promo_code, shipping_city) is not None:
         return None
-    subtotal = sum(
-        int(position["qty"]) * int(position["unit_price_kopecks"]) for position in lines
-    )
+    subtotal = sum(int(position["qty"]) * int(position["unit_price_kopecks"]) for position in lines)
     quantity = sum(int(position["qty"]) for position in lines)
     tier_percent = 0
     for threshold, percent in TIER_DISCOUNTS:
@@ -71,9 +87,7 @@ def calculate_order_total(
     discount = percent_of(subtotal, discount_percent)
     discounted_subtotal = subtotal - discount
     delivery = (
-        SHIPPING_KOPEKS
-        if shipping_city and discounted_subtotal < FREE_DELIVERY_FROM_KOPEKS
-        else 0
+        SHIPPING_KOPEKS if shipping_city and discounted_subtotal < FREE_DELIVERY_FROM_KOPEKS else 0
     )
     base = discounted_subtotal + delivery
     vat = percent_of(base, VAT_PERCENT)
