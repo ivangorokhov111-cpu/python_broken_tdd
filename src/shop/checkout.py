@@ -35,6 +35,8 @@ def validate_order(
             return "line quantity must be greater than zero"
         if not position["unit_price_kopecks"].lstrip("-").isdigit():
             return "line price must be a whole number"
+        if int(position["unit_price_kopecks"]) < 0:
+            return "line price must not be negative"
     return None
 
 
