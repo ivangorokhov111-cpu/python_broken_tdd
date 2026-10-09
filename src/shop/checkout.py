@@ -24,6 +24,9 @@ def validate_order(
     if not lines:
         return "order has no lines"
     for position in lines:
+        for key in REQUIRED_LINE_KEYS:
+            if key not in position:
+                return f"line is missing required key {key}"
         if position.get("sku") == "":
             return "line has an empty sku"
         if int(position["qty"]) <= 0:
