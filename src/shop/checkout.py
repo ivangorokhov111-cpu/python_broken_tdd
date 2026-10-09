@@ -29,6 +29,8 @@ def validate_order(
                 return f"line is missing required key {key}"
         if position.get("sku") == "":
             return "line has an empty sku"
+        if not position["qty"].isdigit():
+            return "line quantity must be a whole number"
         if int(position["qty"]) <= 0:
             return "line quantity must be greater than zero"
     return None
